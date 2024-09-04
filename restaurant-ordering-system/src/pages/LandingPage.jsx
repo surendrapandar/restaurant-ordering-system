@@ -25,7 +25,7 @@ function App() {
             Learn More
           </a>
           <a
-            href="#get-started"
+            href="/admin"
             className="bg-transparent border-2 border-white px-6 py-3 rounded-lg font-medium"
           >
             Get Started
