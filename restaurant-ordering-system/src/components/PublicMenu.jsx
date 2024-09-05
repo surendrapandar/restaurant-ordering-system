@@ -4,6 +4,7 @@ import { getMenuItems, addOrder } from "@/firebase/firestoreService"; // Ensure 
 const PublicMenu = ({ restaurantId }) => {
   const [menuItems, setMenuItems] = useState([]);
   const [order, setOrder] = useState({ items: [], tableNumber: "" });
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchMenuItems = async () => {
@@ -51,59 +52,86 @@ const PublicMenu = ({ restaurantId }) => {
     0
   );
 
+  const filteredItems = menuItems.filter((item) =>
+    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const categorizedItems = filteredItems.reduce((acc, item) => {
+    if (!acc[item.category]) {
+      acc[item.category] = [];
+    }
+    acc[item.category].push(item);
+    return acc;
+  }, {});
+
   return (
     <div className="container mx-auto p-4">
       <h2 className="text-2xl text-white font-bold mb-4">Menu</h2>
+      <input
+        type="text"
+        placeholder="Search..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="border p-2 mb-4 w-full rounded-md"
+      />
       <form onSubmit={handleSubmitOrder}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
-          {menuItems.map((item) => (
-            <div
-              key={item.id}
-              className="border rounded-lg p-4 shadow-md flex flex-col items-center     "
-            >
-              <h3 className="text-lg text-white font-semibold mb-2">
-                {item.name}
-              </h3>
-              <p className="text-white mb-2">₹{item.price}</p>
-              <div className="flex items-center mb-2">
-                <button
-                  type="button"
-                  className="bg-white text-black px-2 py-1 rounded-l"
-                  onClick={() =>
-                    handleOrderChange(
-                      item,
-                      (order.items.find((i) => i.name === item.name)
-                        ?.quantity || 0) - 1
-                    )
-                  }
+        {Object.keys(categorizedItems).map((category) => (
+          <div key={category}>
+            <h3 className="text-xl text-white font-semibold mb-2">
+              {category}
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
+              {categorizedItems[category].map((item) => (
+                <div
+                  key={item.id}
+                  className="border rounded-lg p-4 shadow-md flex flex-col items-center"
                 >
-                  -
-                </button>
-                <input
-                  type="text"
-                  readOnly
-                  value={
-                    order.items.find((i) => i.name === item.name)?.quantity || 0
-                  }
-                  className="w-12 text-center border-t border-b"
-                />
-                <button
-                  type="button"
-                  className="bg-white text-black px-2 py-1 rounded-r"
-                  onClick={() =>
-                    handleOrderChange(
-                      item,
-                      (order.items.find((i) => i.name === item.name)
-                        ?.quantity || 0) + 1
-                    )
-                  }
-                >
-                  +
-                </button>
-              </div>
+                  <h3 className="text-lg text-white font-semibold mb-2">
+                    {item.name}
+                  </h3>
+                  <p className="text-white mb-2">₹{item.price}</p>
+                  <div className="flex items-center mb-2">
+                    <button
+                      type="button"
+                      className="bg-white text-black px-2 py-1 rounded-l"
+                      onClick={() =>
+                        handleOrderChange(
+                          item,
+                          (order.items.find((i) => i.name === item.name)
+                            ?.quantity || 0) - 1
+                        )
+                      }
+                    >
+                      -
+                    </button>
+                    <input
+                      type="text"
+                      readOnly
+                      value={
+                        order.items.find((i) => i.name === item.name)
+                          ?.quantity || 0
+                      }
+                      className="w-12 text-center border-t border-b"
+                    />
+                    <button
+                      type="button"
+                      className="bg-white text-black px-2 py-1 rounded-r"
+                      onClick={() =>
+                        handleOrderChange(
+                          item,
+                          (order.items.find((i) => i.name === item.name)
+                            ?.quantity || 0) + 1
+                        )
+                      }
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
         <div className="mb-4">
           <input
             type="text"

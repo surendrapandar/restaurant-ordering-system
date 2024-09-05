@@ -5,7 +5,9 @@ import {
   deleteMenuItem,
   getMenuItems,
   getOrders,
-  deleteOrder, // Ensure you have deleteOrder function in firestoreService.js
+  deleteOrder,
+  getCategories,
+  addCategory,
 } from "@/firebase/firestoreService";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -13,8 +15,10 @@ import { Input } from "@/components/ui/input";
 function AdminDashboard({ userId }) {
   const [menuItems, setMenuItems] = useState([]);
   const [orders, setOrders] = useState([]);
-  const [newItem, setNewItem] = useState({ name: "", price: "" });
+  const [newItem, setNewItem] = useState({ name: "", price: "", category: "" });
   const [editingItem, setEditingItem] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [newCategory, setNewCategory] = useState("");
 
   useEffect(() => {
     const fetchMenuItems = async () => {
@@ -32,11 +36,26 @@ function AdminDashboard({ userId }) {
     fetchOrders();
   }, [userId]);
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const fetchedCategories = await getCategories(userId);
+      setCategories(fetchedCategories);
+    };
+    fetchCategories();
+  }, [userId]);
+
   const handleAddItem = async () => {
     await addMenuItem(userId, newItem);
-    setNewItem({ name: "", price: "" });
+    setNewItem({ name: "", price: "", category: "" });
     const items = await getMenuItems(userId);
     setMenuItems(items);
+  };
+
+  const handleAddCategory = async () => {
+    await addCategory(userId, newCategory);
+    setNewCategory("");
+    const fetchedCategories = await getCategories(userId);
+    setCategories(fetchedCategories);
   };
 
   const handleEditItem = async (id) => {
@@ -144,11 +163,40 @@ function AdminDashboard({ userId }) {
               }
               className="mb-2"
             />
+            <select
+              value={newItem.category}
+              onChange={(e) =>
+                setNewItem({ ...newItem, category: e.target.value })
+              }
+              className="mb-2"
+            >
+              <option value="">Select Category</option>
+              {categories.map((cat, index) => (
+                <option key={index} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
             <button
               className="bg-blue-500 text-white px-4 py-2 rounded-lg"
               onClick={handleAddItem}
             >
               Add Item
+            </button>
+          </div>
+          <div className="mb-4">
+            <Input
+              type="text"
+              placeholder="New Category"
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              className="mb-2"
+            />
+            <button
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg"
+              onClick={handleAddCategory}
+            >
+              Add Category
             </button>
           </div>
           <div className="overflow-x-auto">
@@ -157,6 +205,7 @@ function AdminDashboard({ userId }) {
                 <tr>
                   <th className="px-4 py-2">Name</th>
                   <th className="px-4 py-2">Price</th>
+                  <th className="px-4 py-2">Category</th>
                   <th className="px-4 py-2">Actions</th>
                 </tr>
               </thead>
@@ -193,6 +242,28 @@ function AdminDashboard({ userId }) {
                         />
                       ) : (
                         item.price
+                      )}
+                    </td>
+                    <td className="border px-4 py-2">
+                      {editingItem && editingItem.id === item.id ? (
+                        <select
+                          value={editingItem.category}
+                          onChange={(e) =>
+                            setEditingItem({
+                              ...editingItem,
+                              category: e.target.value,
+                            })
+                          }
+                        >
+                          <option value="">Select Category</option>
+                          {categories.map((cat, index) => (
+                            <option key={index} value={cat}>
+                              {cat}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        item.category
                       )}
                     </td>
                     <td className="border px-4 py-2">
